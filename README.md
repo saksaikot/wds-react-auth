@@ -1,70 +1,128 @@
-# Getting Started with Create React App
+# Create react project
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+`npm init react-app appName`
 
-## Available Scripts
+# Create a project `wds-react-auth-dev` without analytical option in firebase
 
-In the project directory, you can run:
+- create same for a production project `wds-react-auth-prod`
+- enable signup method: `under project overview>Build>Authentication>Sign-in Method>enable email/password section`
+- there are other signup method, we can enable them as needed
+- under save `Authentication` tab there is `Authorized Domain`, we allow localhost in dev environment and in production environment we disallow/delete localhost
+- on Project overview main content there are icons to create app for the project
+- we click on web app icon and register `wds-react-auth-dev` app
+- there we will get our api and config json file
 
-### `npm start`
+  ```js
+  var firebaseConfig = {
+    apiKey: "",
+    authDomain: "m",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: "",
+  };
+  ```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+# create .env.local
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- .env.local is for storing environment variable
+- it will not push in the git
+- changing local environment variable for production is easy
+- no need to change app code
 
-### `npm test`
+# install firebase
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- `npm i firebase`
 
-### `npm run build`
+# firebase initialization
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- create a `firebase.js` under src
+- import firebase/app and firebase auth
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+  ```js
+  import firebase from "firebase/app";
+  import "firebase/auth";
+  ```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- create app
 
-### `npm run eject`
+  ```js
+  const app = firebase.initializeApp({
+    apiKey: process.env.REACT_WDS_AUTH_FIREBASE_API_KEY,
+    authDomain: process.env.REACT_WDS_AUTH_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.REACT_WDS_AUTH_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.REACT_WDS_AUTH_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.REACT_WDS_AUTH_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.REACT_WDS_AUTH_FIREBASE_APP_ID,
+  });
+  export const auth = app.auth();
+  export default app;
+  ```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+# install bootstrap and react-bootstrap
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- `npm i bootstrap react-bootstrap`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+# app cleanup
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+- remove all but App.js and index.js, and other npm and git files
+- move App to components
+- remove any unused import
+- fix App import in index.js
+- App return "Hello world"
+- run the project `npm start`
 
-## Learn More
+# authContext
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```js
+const AuthContext = React.createContext();
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+export default function AuthProvider({ children }) {
+    const [currentUser, setCurrentUser] = useState();
+  const [loading, setLoading] = useState(true);
+    useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+  const value={objects}
+    return (
+<AuthContext.Provider value={value}>
+  {!loading && children}
+</AuthContext.Provider>;
+)
+}
+```
 
-### Code Splitting
+```js
+function signup(email, password) {
+  return auth.createUserWithEmailAndPassword(email, password);
+}
+function login(email, password) {
+  return auth.signInWithEmailAndPassword(email, password);
+}
+function logout() {
+  return auth.signOut();
+}
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+function resetPassword(email) {
+  return auth.sendPasswordResetEmail(email);
+}
+function updateEmail(email) {
+  return currentUser.updateEmail(email);
+}
+function updatePassword(password) {
+  return currentUser.updatePassword(password);
+}
+const value = {
+  currentUser,
+  signup,
+  login,
+  logout,
+  resetPassword,
+  updateEmail,
+  updatePassword,
+};
+```
